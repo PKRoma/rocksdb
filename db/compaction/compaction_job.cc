@@ -2438,6 +2438,32 @@ bool CompactionJob::UpdateInternalStatsFromInputFiles(
   bool has_error = false;
   const ReadOptions read_options(Env::IOActivity::kCompaction);
   const auto& input_table_properties = compaction->GetInputTableProperties();
+
+  // Check all input files for old block-based SST format_version. Why? Old
+  // block-based SST files from roughly version 5.0 to 5.18 could produce
+  // inaccurate num_entries counts due to the evolution of its handling along
+  // with num_range_deletions. We have to disable some paranoid checks when
+  // compacting files from such an old release. However, we don't have great
+  // information to identify those files, so we heuristically over-approximate
+  // that set of files using
+  // (a) format_version < 5, which will be true for any files from RocksDB <
+  // 6.6.0 and should not be true for any recent production files
+  // (b) to avoid including non-block-based SST files (which still use older
+  // format_version markers, and do not support DeleteRange), we also require
+  // the presence of the user property "rocksdb.block.based.table.index.type",
+  // which was added in RocksDB 2.8 and is always present in block-based tables.
+  for (const auto& tp_pair : input_table_properties) {
+    if (tp_pair.second && tp_pair.second->format_version < 5) {
+      // Check for block-based table by looking for its index type property
+      const auto& user_props = tp_pair.second->user_collected_properties;
+      if (user_props.find(BlockBasedTablePropertyNames::kIndexType) !=
+          user_props.end()) {
+        job_stats_->has_accurate_num_input_records = false;
+        break;
+      }
+    }
+  }
+
   for (int input_level = 0;
        input_level < static_cast<int>(compaction->num_input_levels());
        ++input_level) {

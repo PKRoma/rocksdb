@@ -1,6 +1,10 @@
 # Rocksdb Change Log
 > NOTE: Entries for next release do not go here. Follow instructions in `unreleased_history/README.txt`
 
+## 10.11.2 (02/25/2026)
+### Bug Fixes
+* Fix longstanding failures that can arise from reading and/or compacting old DB dirs with range deletions (likely from version < 5.19.0) in many newer versions.
+
 ## 10.11.1 (02/06/2026)
 ### Bug Fixes
 * Fixed a bug in PosixFS AbortIO that could cause it to ignore an IO completion and a subsequent Poll to hang

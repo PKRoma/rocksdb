@@ -1,6 +1,10 @@
 # Rocksdb Change Log
 > NOTE: Entries for next release do not go here. Follow instructions in `unreleased_history/README.txt`
 
+## 11.0.2 (02/26/2026)
+### Public API Changes
+Revert removing deprecated DB::Open raw pointer variants in db.h
+
 ## 11.0.0 (02/23/2026)
 ### New Features
 * Added support for storing wide-column entity column values in blob files. When `min_blob_size` is configured, large column values in wide-column entities will be stored in blob files, reducing SST file size and improving read performance.
